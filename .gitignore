@@ -1,0 +1,16 @@
+# Base de données locale (chacun a la sienne en local, ne pas partager)
+transferts.db
+transferts.db-wal
+transferts.db-shm
+*.db
+
+# Dossiers de fichiers stockés (contenu réel des transferts, pas du code)
+stockage/
+
+# Fichiers Python générés automatiquement
+__pycache__/
+*.pyc
+
+# Fichiers système
+.DS_Store
+Thumbs.db
