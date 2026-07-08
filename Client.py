@@ -1,4 +1,6 @@
 import socket
+from tkinter import Tk, filedialog
+import os
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -24,14 +26,31 @@ while True:
         print(reponse)
 
     elif choix == "2":
-        nom = input("Nom du fichier a envoyer : ")
+        root = Tk()
+        root.withdraw()
+        chemin = filedialog.askopenfilename(
+            title="Choisir un fichier à envoyer"
+        )
+
+        if chemin == "":
+            print("Aucun fichier sélectionné.")
+            continue
+
+        nom = os.path.basename(chemin)
 
         client.send(f"Envoyer {nom}".encode())
+        with open(chemin, "rb") as f:
+            while True:
+                data = f.read(4096)
 
-        with open(nom, "rb") as f:
-            client.send(f.read())
+                if not data:
+                    break
 
-        print("Fichier envoye.")
+                client.send(data)
+
+        print("Fichier envoyé :", nom)
+
+        root.destroy()
 
     elif choix == "3":
         nom = input("Nom du fichier a telecharger : ")
