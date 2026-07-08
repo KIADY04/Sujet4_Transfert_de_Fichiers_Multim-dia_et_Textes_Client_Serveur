@@ -62,7 +62,7 @@ def initialiser_bdd():
     conn.close()
 
     # Crée aussi les dossiers de stockage physique s'ils n'existent pas
-    for sous_dossier in ["videos", "audios", "textes"]:
+    for sous_dossier in ["videos", "audios", "textes", "images"]:
         os.makedirs(os.path.join("stockage", sous_dossier), exist_ok=True)
 
     print("Base de données initialisée avec succès.")
@@ -272,7 +272,7 @@ def historique_transferts(client=None):
 
 def deviner_type_fichier(nom_fichier):
     """
-    Fonction utilitaire : déduit le type (video/audio/texte) à partir
+    Fonction utilitaire : déduit le type (video/audio/texte/image) à partir
     de l'extension du fichier. Pratique pour Personne 1 et Personne 2.
     """
     ext = os.path.splitext(nom_fichier)[1].lower()
@@ -280,7 +280,8 @@ def deviner_type_fichier(nom_fichier):
     extensions_video = [".mp4", ".avi", ".mkv", ".mov"]
     extensions_audio = [".mp3", ".wav", ".ogg", ".flac", ".m4a"]
     extensions_texte = [".txt", ".doc", ".docx", ".pdf"]
-    extensions_image = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
+    extensions_image = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp",
+                         ".tiff", ".tif", ".svg", ".ico", ".heic", ".heif", ".jfif"]
 
     if ext in extensions_video:
         return "video"
@@ -296,8 +297,12 @@ def deviner_type_fichier(nom_fichier):
 
 # ------------------------------------------------------------------
 # Test rapide du module (exécuter directement : python db_manager.py)
+# ATTENTION : ce bloc utilise une base de test séparée (test_transferts.db)
+# pour ne jamais polluer la vraie base de production (transferts.db).
 # ------------------------------------------------------------------
 if __name__ == "__main__":
+    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_transferts.db")
+
     initialiser_bdd()
 
     # Exemple d'ajout d'un fichier
