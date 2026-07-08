@@ -3,7 +3,8 @@ from datetime import datetime
 import os
 import threading
 
-DB_PATH = "transferts.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "transferts.db")
 
 # Verrou global : empêche deux threads (= deux clients connectés en même
 # temps) d'écrire dans la BDD exactement au même instant.
@@ -55,7 +56,7 @@ def initialiser_bdd():
 
     # Crée aussi les dossiers de stockage physique s'ils n'existent pas
     for sous_dossier in ["videos", "audios", "textes"]:
-        os.makedirs(os.path.join("stockage", sous_dossier), exist_ok=True)
+        os.makedirs(os.path.join(BASE_DIR, "stockage", sous_dossier), exist_ok=True)
 
     print("Base de données initialisée avec succès.")
 
