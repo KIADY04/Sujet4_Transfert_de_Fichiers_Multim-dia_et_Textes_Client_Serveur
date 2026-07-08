@@ -2,12 +2,14 @@ import socket
 import threading
 import os
 
+import db_manager
+
 # ----------------------- Configuration -----------------------
 HOST = "10.164.40.2"      
 PORT = 5000
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STORAGE_DIR = os.path.join(BASE_DIR, "fichiers_serveur")
+STORAGE_DIR = os.path.join(BASE_DIR, "stockage")
 
 BUFFER_SIZE = 4096
 
@@ -88,7 +90,7 @@ def gerer_client(conn_socket, adresse):
 
             # ---------------- LIST ----------------
             if commande == "LIST":
-                fichiers = os.listdir(STORAGE_DIR) if os.path.exists(STORAGE_DIR) else []
+                fichiers = [f["nom_fichier"] for f in db_manager.lister_fichiers()]
                 envoyer_ligne(conn_socket, "LISTING|" + ";".join(fichiers))
 
             # ---------------- UPLOAD ----------------
@@ -100,11 +102,26 @@ def gerer_client(conn_socket, adresse):
                     envoyer_ligne(conn_socket, "ERROR|Taille de fichier invalide")
                     continue
 
-                os.makedirs(STORAGE_DIR, exist_ok=True)
-                chemin_dest = os.path.join(STORAGE_DIR, nom_fichier)
+                # Détecte le type et évite les doublons de noms en base
+                type_fichier = db_manager.deviner_type_fichier(nom_fichier)
+                nom_fichier = db_manager.nom_disponible(nom_fichier)
+
+                sous_dossier = {
+                    "video": "videos",
+                    "audio": "audios",
+                    "texte": "textes",
+                }.get(type_fichier, "textes")
+
+                dossier_dest = os.path.join(STORAGE_DIR, sous_dossier)
+                os.makedirs(dossier_dest, exist_ok=True)
+                chemin_dest = os.path.join(dossier_dest, nom_fichier)
 
                 envoyer_ligne(conn_socket, "OK|Prêt à recevoir")
                 recu = recevoir_fichier(conn_socket, chemin_dest, taille)
+
+                # Enregistrement en base de données
+                fichier_id = db_manager.ajouter_fichier(nom_fichier, type_fichier, recu, chemin_dest)
+                db_manager.enregistrer_transfert(fichier_id, client_id, "UPLOAD")
 
                 envoyer_ligne(conn_socket, f"OK|Fichier '{nom_fichier}' reçu ({recu} octets)")
                 print(f"[{client_id}] Upload terminé : {nom_fichier} ({recu} octets)")
@@ -112,15 +129,18 @@ def gerer_client(conn_socket, adresse):
             # ---------------- DOWNLOAD ----------------
             elif commande == "DOWNLOAD" and len(parties) == 2:
                 nom_fichier = os.path.basename(parties[1])
-                chemin_source = os.path.join(STORAGE_DIR, nom_fichier)
+                infos = db_manager.obtenir_fichier_par_nom(nom_fichier)
 
-                if not os.path.isfile(chemin_source):
+                if infos is None or not os.path.isfile(infos["chemin"]):
                     envoyer_ligne(conn_socket, "ERROR|Fichier introuvable sur le serveur")
                     continue
 
+                chemin_source = infos["chemin"]
                 taille = os.path.getsize(chemin_source)
                 envoyer_ligne(conn_socket, f"FILE|{nom_fichier}|{taille}")
                 envoyer_fichier(conn_socket, chemin_source)
+
+                db_manager.enregistrer_transfert(infos["id"], client_id, "DOWNLOAD")
                 print(f"[{client_id}] Download terminé : {nom_fichier} ({taille} octets)")
 
             else:
@@ -137,7 +157,7 @@ def gerer_client(conn_socket, adresse):
 
 # ----------------------- Démarrage du serveur -----------------------
 def demarrer_serveur():
-    os.makedirs(STORAGE_DIR, exist_ok=True)
+    db_manager.initialiser_bdd()  # crée les tables + les sous-dossiers de stockage
 
     serveur_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serveur_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

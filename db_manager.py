@@ -1,20 +1,3 @@
-"""
-db_manager.py
-Module de gestion de la base de données pour le projet
-"Transfert de Fichiers Multimédia et Textes Client-Serveur"
-
-Ce module est destiné à être importé par le serveur (Personne 1)
-et éventuellement par l'interface graphique (Personne 3).
-
-Utilisation typique :
-    import db_manager as db
-
-    db.initialiser_bdd()
-    fichier_id = db.ajouter_fichier("video.mp4", "video", 1048576, "stockage/videos/video.mp4")
-    db.enregistrer_transfert(fichier_id, "192.168.1.10", "UPLOAD", "succès")
-    fichiers = db.lister_fichiers()
-"""
-
 import sqlite3
 from datetime import datetime
 import os
