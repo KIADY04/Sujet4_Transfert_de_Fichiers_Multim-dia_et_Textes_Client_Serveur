@@ -3,7 +3,7 @@ import threading
 import os
 
 # ----------------------- Configuration -----------------------
-HOST = "127.0.0.1"      
+HOST = "10.164.40.2"      
 PORT = 5000
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,6 +12,8 @@ STORAGE_DIR = os.path.join(BASE_DIR, "fichiers_serveur")
 BUFFER_SIZE = 4096
 
 
+# ------------------------ Déconnection du client après 5 min d'inactivité -----------------------
+CLIENT_TIMEOUT = 300  # 5 minutes
 # ----------------------- Communication réseau (aide) -----------------------
 def envoyer_ligne(conn_socket, texte):
     """Envoie une ligne de texte terminée par \\n."""
@@ -68,7 +70,16 @@ def envoyer_fichier(conn_socket, chemin_source):
 def gerer_client(conn_socket, adresse):
     client_id = f"{adresse[0]}:{adresse[1]}"
     print(f"[+] Nouveau client connecté : {client_id}")
-
+    try:
+        conn_socket.settimeout(CLIENT_TIMEOUT)  # Définir le délai d'inactivité
+    except ConnectionResetError:
+        pass
+    finally:
+        conn_socket.close()  
+        print(f"[-] Client déconnecté immédiatement : {client_id}")
+        conn_socket.close()
+        return
+        
     try:
         while True:
             entete = recevoir_ligne(conn_socket)
@@ -124,6 +135,8 @@ def gerer_client(conn_socket, adresse):
     finally:
         conn_socket.close()
         print(f"[-] Client déconnecté : {client_id}")
+
+
 
 
 # ----------------------- Démarrage du serveur -----------------------
