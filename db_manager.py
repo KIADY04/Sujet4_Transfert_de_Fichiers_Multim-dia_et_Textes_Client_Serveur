@@ -55,7 +55,7 @@ def initialiser_bdd():
     conn.close()
 
     # Crée aussi les dossiers de stockage physique s'ils n'existent pas
-    for sous_dossier in ["videos", "audios", "textes"]:
+    for sous_dossier in ["videos", "audios", "textes", "images"]:
         os.makedirs(os.path.join(BASE_DIR, "stockage", sous_dossier), exist_ok=True)
 
     print("Base de données initialisée avec succès.")
@@ -238,7 +238,7 @@ def historique_transferts(client=None):
 
 def deviner_type_fichier(nom_fichier):
     """
-    Fonction utilitaire : déduit le type (video/audio/texte) à partir
+    Fonction utilitaire : déduit le type (video/audio/texte/image) à partir
     de l'extension du fichier. Pratique pour Personne 1 et Personne 2.
     """
     ext = os.path.splitext(nom_fichier)[1].lower()
@@ -246,6 +246,7 @@ def deviner_type_fichier(nom_fichier):
     extensions_video = [".mp4", ".avi", ".mkv", ".mov"]
     extensions_audio = [".mp3", ".wav", ".ogg", ".flac"]
     extensions_texte = [".txt", ".doc", ".docx", ".pdf"]
+    extensions_image = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
 
     if ext in extensions_video:
         return "video"
@@ -253,6 +254,8 @@ def deviner_type_fichier(nom_fichier):
         return "audio"
     elif ext in extensions_texte:
         return "texte"
+    elif ext in extensions_image:
+        return "image"
     else:
         return "autre"
 

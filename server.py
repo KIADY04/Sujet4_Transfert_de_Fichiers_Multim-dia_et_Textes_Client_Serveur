@@ -110,6 +110,7 @@ def gerer_client(conn_socket, adresse):
                     "video": "videos",
                     "audio": "audios",
                     "texte": "textes",
+                    "image": "images",
                 }.get(type_fichier, "textes")
 
                 dossier_dest = os.path.join(STORAGE_DIR, sous_dossier)
