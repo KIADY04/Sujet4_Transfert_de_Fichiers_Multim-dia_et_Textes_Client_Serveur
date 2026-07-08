@@ -2,9 +2,9 @@ import sqlite3
 from datetime import datetime
 import os
 import threading
+import hashlib
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "transferts.db")
+DB_PATH = "transferts.db"
 
 # Verrou global : empêche deux threads (= deux clients connectés en même
 # temps) d'écrire dans la BDD exactement au même instant.
@@ -35,9 +35,16 @@ def initialiser_bdd():
             type_fichier TEXT NOT NULL,
             taille INTEGER NOT NULL,
             chemin TEXT NOT NULL,
-            date_ajout TEXT NOT NULL
+            date_ajout TEXT NOT NULL,
+            hash TEXT
         )
     """)
+
+    # Migration : ajoute la colonne 'hash' si la table existait déjà sans elle
+    try:
+        cur.execute("ALTER TABLE fichiers ADD COLUMN hash TEXT")
+    except sqlite3.OperationalError:
+        pass  # la colonne existe déjà
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS transferts (
@@ -55,8 +62,8 @@ def initialiser_bdd():
     conn.close()
 
     # Crée aussi les dossiers de stockage physique s'ils n'existent pas
-    for sous_dossier in ["videos", "audios", "textes", "images"]:
-        os.makedirs(os.path.join(BASE_DIR, "stockage", sous_dossier), exist_ok=True)
+    for sous_dossier in ["videos", "audios", "textes"]:
+        os.makedirs(os.path.join("stockage", sous_dossier), exist_ok=True)
 
     print("Base de données initialisée avec succès.")
 
@@ -84,12 +91,13 @@ def nom_disponible(nom_fichier):
     return nom_essai
 
 
-def ajouter_fichier(nom_fichier, type_fichier, taille, chemin):
+def ajouter_fichier(nom_fichier, type_fichier, taille, chemin, hash_fichier=None):
     """
     Enregistre un nouveau fichier dans la table 'fichiers'.
     Retourne l'id du fichier créé.
 
     type_fichier doit être : "video", "audio" ou "texte"
+    hash_fichier : empreinte SHA-256 du contenu (utilisée pour détecter les doublons)
 
     Thread-safe : utilise un verrou car plusieurs clients peuvent
     envoyer des fichiers en même temps (threads différents côté serveur).
@@ -100,9 +108,9 @@ def ajouter_fichier(nom_fichier, type_fichier, taille, chemin):
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO fichiers (nom_fichier, type_fichier, taille, chemin, date_ajout)
-            VALUES (?, ?, ?, ?, ?)
-        """, (nom_fichier, type_fichier, taille, chemin, date_ajout))
+            INSERT INTO fichiers (nom_fichier, type_fichier, taille, chemin, date_ajout, hash)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (nom_fichier, type_fichier, taille, chemin, date_ajout, hash_fichier))
         conn.commit()
         fichier_id = cur.lastrowid
         conn.close()
@@ -168,6 +176,32 @@ def lister_fichiers(type_fichier=None):
     resultats = [dict(row) for row in cur.fetchall()]
     conn.close()
     return resultats
+
+
+def calculer_hash(chemin_fichier):
+    """
+    Calcule l'empreinte SHA-256 du contenu d'un fichier.
+    Lit le fichier par morceaux pour ne pas surcharger la mémoire,
+    même avec des gros fichiers (vidéos, etc.).
+    """
+    sha256 = hashlib.sha256()
+    with open(chemin_fichier, "rb") as f:
+        for morceau in iter(lambda: f.read(65536), b""):
+            sha256.update(morceau)
+    return sha256.hexdigest()
+
+
+def obtenir_fichier_par_hash(hash_fichier):
+    """
+    Retourne les infos d'un fichier déjà présent en base ayant la même
+    empreinte (même contenu), ou None si aucun doublon n'existe.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM fichiers WHERE hash = ?", (hash_fichier,))
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 
 def obtenir_fichier_par_nom(nom_fichier):
@@ -238,7 +272,7 @@ def historique_transferts(client=None):
 
 def deviner_type_fichier(nom_fichier):
     """
-    Fonction utilitaire : déduit le type (video/audio/texte/image) à partir
+    Fonction utilitaire : déduit le type (video/audio/texte) à partir
     de l'extension du fichier. Pratique pour Personne 1 et Personne 2.
     """
     ext = os.path.splitext(nom_fichier)[1].lower()
