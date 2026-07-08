@@ -41,7 +41,13 @@ while True:
         data = client.recv(4096)
 
         with open(nom, "wb") as f:
-            f.write(data)
+            while True:
+                data = client.recv(4096)
+
+                if not data:
+                    break
+
+                f.write(data)
 
         print("Telechargement termine.")
 
