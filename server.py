@@ -3,13 +3,17 @@ import threading
 import os
 
 # ----------------------- Configuration -----------------------
-HOST = "127.0.0.1"      
+HOST = "10.164.40.2"      
 PORT = 5000
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STORAGE_DIR = os.path.join(BASE_DIR, "fichiers_serveur")
 
 BUFFER_SIZE = 4096
+
+
+# ------------------------ Déconnexion du client après 5 min d'inactivité -----------------------
+CLIENT_TIMEOUT = 300  # 5 minutes
 
 
 # ----------------------- Communication réseau (aide) -----------------------
@@ -69,6 +73,9 @@ def gerer_client(conn_socket, adresse):
     client_id = f"{adresse[0]}:{adresse[1]}"
     print(f"[+] Nouveau client connecté : {client_id}")
 
+    # Le socket lèvera une exception socket.timeout s'il ne reçoit rien pendant ce délai
+    conn_socket.settimeout(CLIENT_TIMEOUT)
+
     try:
         while True:
             entete = recevoir_ligne(conn_socket)
@@ -119,6 +126,8 @@ def gerer_client(conn_socket, adresse):
             else:
                 envoyer_ligne(conn_socket, "ERROR|Commande inconnue")
 
+    except socket.timeout:
+        print(f"\n[!] Client inactif depuis {CLIENT_TIMEOUT // 60} min, connexion coupée : {client_id}")
     except ConnectionResetError:
         pass
     finally:
