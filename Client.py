@@ -21,9 +21,21 @@ while True:
     choix = input("votre choix : ")
 
     if choix == "1":
-        client.send("List".encode())
+        client.send("LIST\n".encode())
+
         reponse = client.recv(4096).decode()
-        print(reponse)
+
+        if reponse.startswith("LISTING|"):
+            fichiers = reponse.split("|")[1]
+
+            print("\n - Fichiers disponibles -")
+
+            for fichier in fichiers.split(";"):
+                if fichier:
+                    print("- " + fichier)
+
+        else:
+            print(reponse)
 
     elif choix == "2":
 
