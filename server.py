@@ -25,7 +25,9 @@ def envoyer_ligne(conn_socket, texte):
 
 
 def recevoir_ligne(conn_socket):
-    """Reçoit une ligne de texte terminée par \\n (en-tête du protocole)."""
+    """Reçoit une ligne de texte terminée par \\n (en-tête du protocole).
+    Retourne None si le client se déconnecte OU si les données reçues
+    ne sont pas du texte valide (client mal formé, scan de port, etc.)."""
     ligne = b""
     while True:
         octet = conn_socket.recv(1)
@@ -34,7 +36,10 @@ def recevoir_ligne(conn_socket):
         if octet == b"\n":
             break
         ligne += octet
-    return ligne.decode("utf-8")
+    try:
+        return ligne.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
 
 
 def recevoir_fichier(conn_socket, chemin_destination, taille):
