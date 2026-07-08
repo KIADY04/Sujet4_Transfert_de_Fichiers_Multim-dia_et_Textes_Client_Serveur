@@ -244,7 +244,7 @@ def deviner_type_fichier(nom_fichier):
     ext = os.path.splitext(nom_fichier)[1].lower()
 
     extensions_video = [".mp4", ".avi", ".mkv", ".mov"]
-    extensions_audio = [".mp3", ".wav", ".ogg", ".flac"]
+    extensions_audio = [".mp3", ".wav", ".ogg", ".flac", ".m4a"]
     extensions_texte = [".txt", ".doc", ".docx", ".pdf"]
     extensions_image = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
 
