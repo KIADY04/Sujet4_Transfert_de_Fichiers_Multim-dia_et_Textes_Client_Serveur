@@ -70,23 +70,27 @@ while True:
     elif choix == "3":
         nom = input("Nom du fichier a telecharger : ")
 
-        client.send(f"Telechargement|{nom}\n".encode())
-
+        client.send(f"DOWNLOAD|{nom}\n".encode())
         reponse = client.recv(4096).decode()
 
         if reponse.startswith("ERROR"):
             print(reponse)
             continue
+
         parties = reponse.strip().split("|")
 
         if parties[0] == "FILE":
-            taille = int(parties[2])
 
+            taille = int(parties[2])
             recu = 0
 
             with open(nom, "wb") as f:
+
                 while recu < taille:
-                    data = client.recv(min(4096, taille - recu))
+
+                    data = client.recv(
+                        min(4096, taille - recu)
+                    )
 
                     if not data:
                         break
@@ -96,7 +100,6 @@ while True:
 
             print("Telechargement termine.")
             print("Taille reçue :", recu, "octets")
-
     elif choix == "4":
         client.send("Quitter".encode())
         client.close()
