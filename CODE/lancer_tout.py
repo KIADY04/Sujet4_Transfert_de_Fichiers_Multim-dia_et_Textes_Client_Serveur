@@ -1,7 +1,7 @@
 import threading
 
 import server              
-import watcher_register    
+import CODE.watcher_register as watcher_register    
 
 
 def main():
