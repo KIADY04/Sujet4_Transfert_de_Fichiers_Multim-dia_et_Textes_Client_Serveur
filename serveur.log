@@ -1,0 +1,77 @@
+2026-07-09 09:03:49 [INFO] === Serveur démarré sur 192.168.88.36:5000 ===
+2026-07-09 09:03:49 [INFO] Dossier de stockage : d:\Sujet4_Transfert_de_Fichiers_Multim-dia_et_Textes_Client_Serveur\stockage
+2026-07-09 09:03:49 [INFO] Fichier de logs     : d:\Sujet4_Transfert_de_Fichiers_Multim-dia_et_Textes_Client_Serveur\serveur.log
+2026-07-09 09:03:49 [INFO] En attente de connexions... (Ctrl+C pour arrêter)
+2026-07-09 09:03:51 [INFO] [+] Nouveau client connecté : 192.168.88.213:53708
+2026-07-09 09:04:00 [INFO] [192.168.88.213:53708] Commande reçue : LOGIN|Hardy|Hardy
+2026-07-09 09:04:00 [INFO] [-] Client déconnecté : 192.168.88.213:53708
+2026-07-09 09:55:25 [INFO] Aucun compte trouvé : compte par défaut créé automatiquement.
+2026-07-09 09:55:25 [INFO]     Utilisateur : admin
+2026-07-09 09:55:25 [INFO]     Mot de passe : admin123
+2026-07-09 09:55:25 [INFO]     (à changer ou à compléter avec creer_utilisateur.py si besoin)
+2026-07-09 09:55:25 [INFO] === Serveur démarré sur 192.168.88.36:5000 ===
+2026-07-09 09:55:25 [INFO] Dossier de stockage : d:\Sujet4_Transfert_de_Fichiers_Multim-dia_et_Textes_Client_Serveur\stockage
+2026-07-09 09:55:25 [INFO] Fichier de logs     : d:\Sujet4_Transfert_de_Fichiers_Multim-dia_et_Textes_Client_Serveur\serveur.log
+2026-07-09 09:55:25 [INFO] En attente de connexions... (Ctrl+C pour arrêter)
+2026-07-09 09:55:30 [INFO] [+] Nouveau client connecté : 192.168.88.213:53870
+2026-07-09 09:55:36 [INFO] [192.168.88.213:53870] Commande reçue : LOGIN|Hardy|Hasina
+2026-07-09 09:55:36 [WARNING] [192.168.88.213:53870] Échec d'authentification : utilisateur='Hardy'
+2026-07-09 09:55:36 [INFO] [-] Client déconnecté : 192.168.88.213:53870
+2026-07-09 09:56:08 [INFO] [+] Nouveau client connecté : 192.168.88.213:53878
+2026-07-09 09:56:21 [INFO] [192.168.88.213:53878] Commande reçue : LOGIN|admin|admin123
+2026-07-09 09:56:21 [INFO] [192.168.88.213:53878] Authentification réussie : utilisateur='admin'
+2026-07-09 09:56:28 [INFO] [192.168.88.213:53878] Commande reçue : LIST
+2026-07-09 09:56:41 [INFO] [-] Client déconnecté : 192.168.88.213:53878
+2026-07-09 10:00:31 [INFO] [+] Nouveau client connecté : 192.168.88.213:53930
+2026-07-09 10:00:53 [INFO] [192.168.88.213:53930] Commande reçue : REGISTER|Hardy|Hasiniaina
+2026-07-09 10:00:53 [WARNING] [192.168.88.213:53930] Commande refusée (non authentifié) : REGISTER|Hardy|Hasiniaina
+2026-07-09 10:00:53 [INFO] [-] Client déconnecté : 192.168.88.213:53930
+2026-07-09 10:01:26 [INFO] [+] Nouveau client connecté : 192.168.88.213:53936
+2026-07-09 10:01:47 [INFO] [192.168.88.213:53936] Commande reçue : REGISTER|Hasina|Hardy
+2026-07-09 10:01:47 [WARNING] [192.168.88.213:53936] Commande refusée (non authentifié) : REGISTER|Hasina|Hardy
+2026-07-09 10:01:47 [INFO] [-] Client déconnecté : 192.168.88.213:53936
+2026-07-09 10:09:59 [INFO] === Serveur démarré sur 192.168.88.36:5000 ===
+2026-07-09 10:09:59 [INFO] Dossier de stockage : d:\Sujet4_Transfert_de_Fichiers_Multim-dia_et_Textes_Client_Serveur\stockage
+2026-07-09 10:09:59 [INFO] Fichier de logs     : d:\Sujet4_Transfert_de_Fichiers_Multim-dia_et_Textes_Client_Serveur\serveur.log
+2026-07-09 10:09:59 [INFO] En attente de connexions... (Ctrl+C pour arrêter)
+2026-07-09 10:10:03 [INFO] [+] Nouveau client connecté : 192.168.88.213:53992
+2026-07-09 10:10:15 [INFO] [192.168.88.213:53992] Commande reçue : REGISTER|Hasina|hardy
+2026-07-09 10:10:15 [WARNING] [192.168.88.213:53992] Commande refusée (non authentifié) : REGISTER|Hasina|hardy
+2026-07-09 10:10:15 [INFO] [-] Client déconnecté : 192.168.88.213:53992
+2026-07-09 10:10:29 [INFO] [+] Nouveau client connecté : 192.168.88.213:53995
+2026-07-09 10:10:42 [INFO] [192.168.88.213:53995] Commande reçue : LOGIN|utilisateur|mot_de_passe
+2026-07-09 10:10:42 [WARNING] [192.168.88.213:53995] Échec d'authentification : utilisateur='utilisateur'
+2026-07-09 10:10:42 [INFO] [-] Client déconnecté : 192.168.88.213:53995
+2026-07-09 10:10:53 [INFO] [+] Nouveau client connecté : 192.168.88.213:53998
+2026-07-09 10:11:49 [INFO] [192.168.88.213:53998] Commande reçue : LOGIN|utilisateur|mot_de_passe
+2026-07-09 10:11:49 [WARNING] [192.168.88.213:53998] Échec d'authentification : utilisateur='utilisateur'
+2026-07-09 10:11:49 [INFO] [-] Client déconnecté : 192.168.88.213:53998
+2026-07-09 10:12:35 [INFO] [+] Nouveau client connecté : 192.168.88.213:54008
+2026-07-09 10:12:46 [INFO] [192.168.88.213:54008] Commande reçue : LOGIN|utilisateur|mot_de_passe
+2026-07-09 10:12:46 [WARNING] [192.168.88.213:54008] Échec d'authentification : utilisateur='utilisateur'
+2026-07-09 10:12:46 [INFO] [-] Client déconnecté : 192.168.88.213:54008
+2026-07-09 10:19:51 [INFO] === Serveur démarré sur 192.168.88.36:5000 ===
+2026-07-09 10:19:51 [INFO] Dossier de stockage : d:\Sujet4_Transfert_de_Fichiers_Multim-dia_et_Textes_Client_Serveur\stockage
+2026-07-09 10:19:51 [INFO] Fichier de logs     : d:\Sujet4_Transfert_de_Fichiers_Multim-dia_et_Textes_Client_Serveur\serveur.log
+2026-07-09 10:19:51 [INFO] En attente de connexions... (Ctrl+C pour arrêter)
+2026-07-09 10:19:53 [INFO] [+] Nouveau client connecté : 192.168.88.213:54052
+2026-07-09 10:20:06 [INFO] [192.168.88.213:54052] Commande reçue : LOGIN|Hasina|Hardy
+2026-07-09 10:20:06 [WARNING] [192.168.88.213:54052] Échec d'authentification : utilisateur='Hasina'
+2026-07-09 10:20:06 [INFO] [-] Client déconnecté : 192.168.88.213:54052
+2026-07-09 10:20:11 [INFO] [+] Nouveau client connecté : 192.168.88.213:54057
+2026-07-09 10:20:22 [INFO] [192.168.88.213:54057] Commande reçue : REGISTER|hasina|Hardy
+2026-07-09 10:20:22 [WARNING] [192.168.88.213:54057] Commande refusée (non authentifié) : REGISTER|hasina|Hardy
+2026-07-09 10:20:22 [INFO] [-] Client déconnecté : 192.168.88.213:54057
+2026-07-09 10:20:30 [INFO] [+] Nouveau client connecté : 192.168.88.213:54060
+2026-07-09 10:20:39 [INFO] [192.168.88.213:54060] Commande reçue : LOGIN|hasina|hardy
+2026-07-09 10:20:39 [WARNING] [192.168.88.213:54060] Échec d'authentification : utilisateur='hasina'
+2026-07-09 10:20:39 [INFO] [-] Client déconnecté : 192.168.88.213:54060
+2026-07-09 10:21:03 [INFO] [+] Nouveau client connecté : 192.168.88.213:54062
+2026-07-09 10:21:09 [INFO] [192.168.88.213:54062] Commande reçue : LOGIN|hasina|Hardy
+2026-07-09 10:21:09 [INFO] [192.168.88.213:54062] Authentification réussie : utilisateur='hasina'
+2026-07-09 10:21:25 [INFO] [192.168.88.213:54062] Commande reçue : LIST
+2026-07-09 10:21:34 [INFO] [192.168.88.213:54062] Commande reçue : UPLOAD|Docker_Compose_Cours_Theorique.pptx|95568
+2026-07-09 10:21:37 [INFO] [192.168.88.213:54062] Upload terminé : Docker_Compose_Cours_Theorique.pptx (95568 octets)
+2026-07-09 10:21:52 [INFO] [192.168.88.213:54062] Commande reçue : DOWNLOAD|Docker_Compose_Cours_Theorique.pptx
+2026-07-09 10:21:53 [INFO] [192.168.88.213:54062] Download terminé : Docker_Compose_Cours_Theorique.pptx (95568 octets)
+2026-07-09 10:21:57 [INFO] [-] Client déconnecté : 192.168.88.213:54062
