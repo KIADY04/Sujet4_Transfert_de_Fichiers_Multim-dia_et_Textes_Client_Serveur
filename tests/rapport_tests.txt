@@ -1,0 +1,11 @@
+TEST DU PROJET DE TRANSFERT DE FICHIERS
+
+Connexion entre le client et le serveur : Réussi
+
+Envoi de fichier (UPLOAD) : Réussi
+
+Téléchargement de fichier (DOWNLOAD) : Réussi
+
+Affichage de la liste des fichiers (LIST) : Réussi
+
+Gestion de plusieurs clients en même temps : Réussi
