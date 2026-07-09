@@ -126,6 +126,11 @@ def gerer_client(conn_socket, adresse):
     # Le socket lèvera une exception socket.timeout s'il ne reçoit rien pendant ce délai
     conn_socket.settimeout(CLIENT_TIMEOUT)
 
+    # Tant que ce client ne s'est pas authentifié avec succès (commande LOGIN),
+    # aucune autre commande (LIST, UPLOAD, DOWNLOAD, DELETE) n'est autorisée.
+    authentifie = False
+    nom_utilisateur = None
+
     try:
         while True:
             entete = recevoir_ligne(conn_socket)
@@ -135,6 +140,27 @@ def gerer_client(conn_socket, adresse):
             logger.info(f"[{client_id}] Commande reçue : {entete}")
             parties = entete.split("|")
             commande = parties[0]
+
+            # ---------------- LOGIN ----------------
+            if commande == "LOGIN" and len(parties) == 3:
+                utilisateur_essai = parties[1]
+                mot_de_passe_essai = parties[2]
+
+                if db_manager.verifier_identifiants(utilisateur_essai, mot_de_passe_essai):
+                    authentifie = True
+                    nom_utilisateur = utilisateur_essai
+                    envoyer_ligne(conn_socket, "OK|Connexion réussie")
+                    logger.info(f"[{client_id}] Authentification réussie : utilisateur='{nom_utilisateur}'")
+                else:
+                    envoyer_ligne(conn_socket, "ERROR|Identifiants incorrects")
+                    logger.warning(f"[{client_id}] Échec d'authentification : utilisateur='{utilisateur_essai}'")
+                continue
+
+            # Bloque toute commande tant que le client n'est pas authentifié
+            if not authentifie:
+                envoyer_ligne(conn_socket, "ERROR|Authentification requise (envoyez LOGIN|utilisateur|mot_de_passe)")
+                logger.warning(f"[{client_id}] Commande refusée (non authentifié) : {entete}")
+                continue
 
             # ---------------- LIST ----------------
             if commande == "LIST":
