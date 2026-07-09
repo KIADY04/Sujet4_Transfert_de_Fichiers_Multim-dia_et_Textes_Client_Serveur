@@ -3,8 +3,10 @@ from datetime import datetime
 import os
 import threading
 import hashlib
+import hmac
 
-DB_PATH = "transferts.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "transferts.db")
 
 # Verrou global : empêche deux threads (= deux clients connectés en même
 # temps) d'écrire dans la BDD exactement au même instant.
@@ -58,12 +60,22 @@ def initialiser_bdd():
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS utilisateurs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom_utilisateur TEXT NOT NULL UNIQUE,
+            sel TEXT NOT NULL,
+            hash_mot_de_passe TEXT NOT NULL,
+            date_creation TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
 
     # Crée aussi les dossiers de stockage physique s'ils n'existent pas
     for sous_dossier in ["videos", "audios", "textes", "images"]:
-        os.makedirs(os.path.join("stockage", sous_dossier), exist_ok=True)
+        os.makedirs(os.path.join(BASE_DIR, "stockage", sous_dossier), exist_ok=True)
 
     print("Base de données initialisée avec succès.")
 
@@ -293,6 +305,85 @@ def deviner_type_fichier(nom_fichier):
         return "image"
     else:
         return "autre"
+
+
+def _hacher_mot_de_passe(mot_de_passe, sel=None):
+    """
+    Calcule le hash sécurisé d'un mot de passe avec PBKDF2 (100 000 itérations).
+    Si `sel` n'est pas fourni, en génère un nouveau (cas de la création de compte).
+    Retourne (sel, hash) sous forme de chaînes hexadécimales.
+    """
+    if sel is None:
+        sel = os.urandom(16).hex()
+    hash_calcule = hashlib.pbkdf2_hmac(
+        "sha256", mot_de_passe.encode("utf-8"), bytes.fromhex(sel), 100_000
+    ).hex()
+    return sel, hash_calcule
+
+
+def creer_utilisateur(nom_utilisateur, mot_de_passe):
+    """
+    Crée un nouveau compte utilisateur.
+    Retourne True si le compte a été créé, False si ce nom existe déjà.
+    """
+    sel, hash_mdp = _hacher_mot_de_passe(mot_de_passe)
+    date_creation = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with _lock:
+        conn = get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                INSERT INTO utilisateurs (nom_utilisateur, sel, hash_mot_de_passe, date_creation)
+                VALUES (?, ?, ?, ?)
+            """, (nom_utilisateur, sel, hash_mdp, date_creation))
+            conn.commit()
+            succes = True
+        except sqlite3.IntegrityError:
+            # nom_utilisateur déjà pris (contrainte UNIQUE violée)
+            succes = False
+        conn.close()
+
+    return succes
+
+
+def verifier_utilisateur(nom_utilisateur, mot_de_passe):
+    """
+    Vérifie qu'un couple (nom_utilisateur, mot_de_passe) est valide.
+    Retourne True si l'authentification réussit, False sinon (y compris
+    si l'utilisateur n'existe pas).
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT sel, hash_mot_de_passe FROM utilisateurs WHERE nom_utilisateur = ?",
+        (nom_utilisateur,)
+    )
+    row = cur.fetchone()
+    conn.close()
+
+    if row is None:
+        return False  # utilisateur inconnu
+
+    _, hash_calcule = _hacher_mot_de_passe(mot_de_passe, sel=row["sel"])
+    # comparaison à temps constant : évite de révéler des indices via le timing
+    return hmac.compare_digest(hash_calcule, row["hash_mot_de_passe"])
+
+
+# Alias : server.py utilise ce nom pour vérifier un identifiant/mot de passe.
+# On garde les deux noms disponibles pour éviter de casser le code de qui que
+# ce soit dans l'équipe (même fonction, appelable sous 2 noms).
+verifier_identifiants = verifier_utilisateur
+
+
+def nombre_utilisateurs():
+    """Retourne le nombre total de comptes utilisateurs enregistrés en base."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) AS total FROM utilisateurs")
+    total = cur.fetchone()["total"]
+    conn.close()
+    return total
 
 
 # ------------------------------------------------------------------
