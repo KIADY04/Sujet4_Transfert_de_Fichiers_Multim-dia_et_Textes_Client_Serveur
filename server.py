@@ -23,6 +23,10 @@ MAX_TAILLE_FICHIER = int(1.5 * 1024 * 1024 * 1024)  # 1.5 Go
 # ------------------------ Déconnexion du client après 5 min d'inactivité -----------------------
 CLIENT_TIMEOUT = 300  # 5 minutes
 
+# Compte créé automatiquement au tout premier démarrage, si aucun compte n'existe encore
+COMPTE_PAR_DEFAUT_UTILISATEUR = "admin"
+COMPTE_PAR_DEFAUT_MOT_DE_PASSE = "admin123"
+
 
 # ----------------------- Logs (fichier + console) -----------------------
 logger = logging.getLogger("serveur")
@@ -321,6 +325,15 @@ def gerer_client(conn_socket, adresse):
 def demarrer_serveur():
     db_manager.initialiser_bdd()  # crée les tables + les sous-dossiers de stockage
     nettoyer_fichiers_temporaires()  # supprime les .tmp_* laissés par des uploads interrompus
+
+    # Si c'est le tout premier démarrage (aucun compte encore créé), on crée
+    # automatiquement un compte par défaut pour pouvoir se connecter directement
+    if db_manager.nombre_utilisateurs() == 0:
+        db_manager.creer_utilisateur(COMPTE_PAR_DEFAUT_UTILISATEUR, COMPTE_PAR_DEFAUT_MOT_DE_PASSE)
+        logger.info("Aucun compte trouvé : compte par défaut créé automatiquement.")
+        logger.info(f"    Utilisateur : {COMPTE_PAR_DEFAUT_UTILISATEUR}")
+        logger.info(f"    Mot de passe : {COMPTE_PAR_DEFAUT_MOT_DE_PASSE}")
+        logger.info("    (à changer ou à compléter avec creer_utilisateur.py si besoin)")
 
     serveur_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serveur_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
