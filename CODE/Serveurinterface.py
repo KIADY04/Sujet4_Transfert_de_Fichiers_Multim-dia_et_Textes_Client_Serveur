@@ -59,8 +59,9 @@ def recevoir_ligne(conn_socket):
         except (socket.timeout, OSError): return None
     return ligne.decode("utf-8")
 
-def recevoir_fichier(conn_socket, chemin_destination, taille):
+def recevoir_fichier(conn_socket, chemin_destination, taille, nom_fichier=""):
     recu = 0
+    seuil_suivant = 10
     try:
         with open(chemin_destination, "wb") as f:
             while recu < taille:
@@ -68,17 +69,32 @@ def recevoir_fichier(conn_socket, chemin_destination, taille):
                 if not morceau: break
                 f.write(morceau)
                 recu += len(morceau)
+
+                if taille > 0:
+                    pourcentage = int((recu / taille) * 100)
+                    if pourcentage >= seuil_suivant:
+                        logger.info(f"[UPLOAD] '{nom_fichier}' : {pourcentage}% reçu ({recu}/{taille} octets)")
+                        seuil_suivant += 10
     except OSError:
         if os.path.exists(chemin_destination): os.remove(chemin_destination)
         raise
     return recu
 
-def envoyer_fichier(conn_socket, chemin_source):
+def envoyer_fichier(conn_socket, chemin_source, taille, nom_fichier=""):
+    envoye = 0
+    seuil_suivant = 10
     with open(chemin_source, "rb") as f:
         while True:
             morceau = f.read(BUFFER_SIZE)
             if not morceau: break
             conn_socket.sendall(morceau)
+            envoye += len(morceau)
+
+            if taille > 0:
+                pourcentage = int((envoye / taille) * 100)
+                if pourcentage >= seuil_suivant:
+                    logger.info(f"[DOWNLOAD] '{nom_fichier}' : {pourcentage}% envoyé ({envoye}/{taille} octets)")
+                    seuil_suivant += 10
 
 def nettoyer_fichiers_temporaires():
     motif = os.path.join(STORAGE_DIR, "**", ".tmp_*")
@@ -159,7 +175,7 @@ def gerer_client(conn_socket, adresse):
                 chemin_temp = os.path.join(dossier_dest, nom_temp)
                 envoyer_ligne(conn_socket, "OK|Prêt")
 
-                try: recu = recevoir_fichier(conn_socket, chemin_temp, taille)
+                try: recu = recevoir_fichier(conn_socket, chemin_temp, taille, nom_fichier_original)
                 except OSError:
                     envoyer_ligne(conn_socket, "ERROR|Erreur d'écriture")
                     continue
@@ -191,7 +207,7 @@ def gerer_client(conn_socket, adresse):
                 taille = os.path.getsize(chemin_source)
                 hash_fichier = infos.get("hash") or ""
                 envoyer_ligne(conn_socket, f"FILE|{nom_fichier}|{taille}|{hash_fichier}")
-                envoyer_fichier(conn_socket, chemin_source)
+                envoyer_fichier(conn_socket, chemin_source, taille, nom_fichier)
                 db_manager.enregistrer_transfert(infos["id"], client_id, "DOWNLOAD")
 
     except Exception as e:
