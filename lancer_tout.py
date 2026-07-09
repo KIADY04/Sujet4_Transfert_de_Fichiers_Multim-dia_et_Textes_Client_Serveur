@@ -1,7 +1,7 @@
 import threading
 
-import server              # ton server.py, sans aucune modification
-import watcher_register    # le script de surveillance des REGISTER
+import server              
+import watcher_register    
 
 
 def main():
