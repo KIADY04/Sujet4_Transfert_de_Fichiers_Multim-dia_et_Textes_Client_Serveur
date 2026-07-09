@@ -5,7 +5,7 @@ import os
 import db_manager
 
 # ----------------------- Configuration -----------------------
-HOST = "10.164.40.2"      
+HOST = "192.168.88.36"      
 PORT = 5000
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -90,8 +90,16 @@ def gerer_client(conn_socket, adresse):
 
             # ---------------- LIST ----------------
             if commande == "LIST":
-                fichiers = [f["nom_fichier"] for f in db_manager.lister_fichiers()]
-                envoyer_ligne(conn_socket, "LISTING|" + ";".join(fichiers))
+                fichiers_disponibles = []
+                for f in db_manager.lister_fichiers():
+                    if os.path.isfile(f["chemin"]):
+                        fichiers_disponibles.append(f["nom_fichier"])
+                    else:
+                        # Fichier supprimé manuellement du disque : on nettoie
+                        # l'entrée orpheline pour qu'elle n'apparaisse plus
+                        db_manager.supprimer_fichier(f["id"])
+                        print(f"[{client_id}] Entrée orpheline nettoyée (LIST) : {f['nom_fichier']}")
+                envoyer_ligne(conn_socket, "LISTING|" + ";".join(fichiers_disponibles))
 
             # ---------------- UPLOAD ----------------
             elif commande == "UPLOAD" and len(parties) == 3:
@@ -110,6 +118,7 @@ def gerer_client(conn_socket, adresse):
                     "video": "videos",
                     "audio": "audios",
                     "texte": "textes",
+                    "image": "images",
                 }.get(type_fichier, "textes")
 
                 dossier_dest = os.path.join(STORAGE_DIR, sous_dossier)
@@ -131,8 +140,16 @@ def gerer_client(conn_socket, adresse):
                 nom_fichier = os.path.basename(parties[1])
                 infos = db_manager.obtenir_fichier_par_nom(nom_fichier)
 
-                if infos is None or not os.path.isfile(infos["chemin"]):
+                if infos is None:
                     envoyer_ligne(conn_socket, "ERROR|Fichier introuvable sur le serveur")
+                    continue
+
+                if not os.path.isfile(infos["chemin"]):
+                    # Le fichier a été supprimé manuellement du disque : on
+                    # nettoie l'entrée orpheline pour qu'elle disparaisse du LIST
+                    db_manager.supprimer_fichier(infos["id"])
+                    envoyer_ligne(conn_socket, "ERROR|Fichier introuvable sur le serveur (entrée supprimée)")
+                    print(f"[{client_id}] Entrée orpheline nettoyée : {nom_fichier}")
                     continue
 
                 chemin_source = infos["chemin"]
