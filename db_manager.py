@@ -62,7 +62,7 @@ def initialiser_bdd():
     conn.close()
 
     # Crée aussi les dossiers de stockage physique s'ils n'existent pas
-    for sous_dossier in ["videos", "audios", "textes"]:
+    for sous_dossier in ["videos", "audios", "textes", "images"]:
         os.makedirs(os.path.join("stockage", sous_dossier), exist_ok=True)
 
     print("Base de données initialisée avec succès.")

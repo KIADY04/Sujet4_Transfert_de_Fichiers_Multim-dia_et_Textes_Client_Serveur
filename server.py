@@ -95,14 +95,17 @@ def gerer_client(conn_socket, adresse):
 
             # ---------------- UPLOAD ----------------
             elif commande == "UPLOAD" and len(parties) == 3:
-                nom_fichier_original = os.path.basename(parties[1])  # sécurité : pas de chemin
+                nom_fichier = os.path.basename(parties[1])  # sécurité : pas de chemin
                 try:
                     taille = int(parties[2])
                 except ValueError:
                     envoyer_ligne(conn_socket, "ERROR|Taille de fichier invalide")
                     continue
 
-                type_fichier = db_manager.deviner_type_fichier(nom_fichier_original)
+                # Détecte le type et évite les doublons de noms en base
+                type_fichier = db_manager.deviner_type_fichier(nom_fichier)
+                nom_fichier = db_manager.nom_disponible(nom_fichier)
+
                 sous_dossier = {
                     "video": "videos",
                     "audio": "audios",
@@ -111,41 +114,13 @@ def gerer_client(conn_socket, adresse):
 
                 dossier_dest = os.path.join(STORAGE_DIR, sous_dossier)
                 os.makedirs(dossier_dest, exist_ok=True)
-
-                # Réception dans un fichier temporaire, le temps de vérifier
-                # s'il s'agit d'un doublon (même contenu déjà stocké)
-                nom_temp = f".tmp_{client_id.replace(':', '_')}_{nom_fichier_original}"
-                chemin_temp = os.path.join(dossier_dest, nom_temp)
+                chemin_dest = os.path.join(dossier_dest, nom_fichier)
 
                 envoyer_ligne(conn_socket, "OK|Prêt à recevoir")
-                recu = recevoir_fichier(conn_socket, chemin_temp, taille)
-
-                # Calcule l'empreinte du contenu reçu et cherche un doublon
-                hash_fichier = db_manager.calculer_hash(chemin_temp)
-                existant = db_manager.obtenir_fichier_par_hash(hash_fichier)
-
-                if existant is not None:
-                    # Contenu déjà présent sur le serveur : pas de doublon créé
-                    os.remove(chemin_temp)
-                    envoyer_ligne(
-                        conn_socket,
-                        f"OK|Fichier déjà présent sur le serveur sous le nom "
-                        f"'{existant['nom_fichier']}' (aucun doublon créé)"
-                    )
-                    print(f"[{client_id}] Upload ignoré (doublon) : "
-                          f"{nom_fichier_original} == {existant['nom_fichier']}")
-                    continue
-
-                # Pas de doublon : on choisit un nom final disponible et on
-                # renomme le fichier temporaire vers son emplacement définitif
-                nom_fichier = db_manager.nom_disponible(nom_fichier_original)
-                chemin_dest = os.path.join(dossier_dest, nom_fichier)
-                os.rename(chemin_temp, chemin_dest)
+                recu = recevoir_fichier(conn_socket, chemin_dest, taille)
 
                 # Enregistrement en base de données
-                fichier_id = db_manager.ajouter_fichier(
-                    nom_fichier, type_fichier, recu, chemin_dest, hash_fichier
-                )
+                fichier_id = db_manager.ajouter_fichier(nom_fichier, type_fichier, recu, chemin_dest)
                 db_manager.enregistrer_transfert(fichier_id, client_id, "UPLOAD")
 
                 envoyer_ligne(conn_socket, f"OK|Fichier '{nom_fichier}' reçu ({recu} octets)")
@@ -167,31 +142,6 @@ def gerer_client(conn_socket, adresse):
 
                 db_manager.enregistrer_transfert(infos["id"], client_id, "DOWNLOAD")
                 print(f"[{client_id}] Download terminé : {nom_fichier} ({taille} octets)")
-
-            # ---------------- DELETE ----------------
-            elif commande == "DELETE" and len(parties) == 2:
-                nom_fichier = os.path.basename(parties[1])
-                infos = db_manager.obtenir_fichier_par_nom(nom_fichier)
-
-                if infos is None:
-                    envoyer_ligne(conn_socket, "ERROR|Fichier introuvable sur le serveur")
-                    continue
-
-                chemin_fichier = infos["chemin"]
-
-                # Supprime le fichier physique s'il existe encore sur le disque
-                if os.path.isfile(chemin_fichier):
-                    try:
-                        os.remove(chemin_fichier)
-                    except OSError as e:
-                        envoyer_ligne(conn_socket, f"ERROR|Impossible de supprimer le fichier : {e}")
-                        continue
-
-                # Supprime l'entrée en base (fichier + historique associé)
-                db_manager.supprimer_fichier(infos["id"])
-
-                envoyer_ligne(conn_socket, f"OK|Fichier '{nom_fichier}' supprimé")
-                print(f"[{client_id}] Suppression effectuée : {nom_fichier}")
 
             else:
                 envoyer_ligne(conn_socket, "ERROR|Commande inconnue")
