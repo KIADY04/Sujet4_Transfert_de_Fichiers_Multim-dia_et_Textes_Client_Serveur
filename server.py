@@ -5,7 +5,7 @@ import os
 import db_manager
 
 # ----------------------- Configuration -----------------------
-HOST = "10.164.40.2"      
+HOST = "192.168.88.36"      
 PORT = 5000
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
