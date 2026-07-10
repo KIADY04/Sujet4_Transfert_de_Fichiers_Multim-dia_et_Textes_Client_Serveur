@@ -273,6 +273,35 @@ def verifier_utilisateur(nom_utilisateur, mot_de_passe):
 verifier_identifiants = verifier_utilisateur
 
 
+def supprimer_utilisateur(nom_utilisateur):
+    """
+    Supprime un compte utilisateur par son nom.
+    Retourne True si un compte a été supprimé, False si aucun compte
+    avec ce nom n'a été trouvé.
+
+    Thread-safe : utilise le même verrou que les autres écritures en base.
+    """
+    with _lock:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM utilisateurs WHERE nom_utilisateur = ?", (nom_utilisateur,))
+        conn.commit()
+        supprime = cur.rowcount > 0
+        conn.close()
+
+    return supprime
+
+
+def lister_utilisateurs():
+    """Retourne la liste de tous les comptes (id, nom, date de création), triés par id."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nom_utilisateur, date_creation FROM utilisateurs ORDER BY id")
+    resultats = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return resultats
+
+
 def nombre_utilisateurs():
     conn = get_connection()
     cur = conn.cursor()

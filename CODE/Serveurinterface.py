@@ -42,7 +42,8 @@ serveur_socket = None
 serveur_actif = False
 lbl_statut = None       
 btn_demarrer = None     
-btn_arreter = None      
+btn_arreter = None
+listbox_utilisateurs = None
 
 # ----------------------- Réseau -----------------------
 def envoyer_ligne(conn_socket, texte):
@@ -59,8 +60,9 @@ def recevoir_ligne(conn_socket):
         except (socket.timeout, OSError): return None
     return ligne.decode("utf-8")
 
-def recevoir_fichier(conn_socket, chemin_destination, taille):
+def recevoir_fichier(conn_socket, chemin_destination, taille, nom_fichier=""):
     recu = 0
+    seuil_suivant = 10
     try:
         with open(chemin_destination, "wb") as f:
             while recu < taille:
@@ -68,17 +70,32 @@ def recevoir_fichier(conn_socket, chemin_destination, taille):
                 if not morceau: break
                 f.write(morceau)
                 recu += len(morceau)
+
+                if taille > 0:
+                    pourcentage = int((recu / taille) * 100)
+                    if pourcentage >= seuil_suivant:
+                        logger.info(f"[UPLOAD] '{nom_fichier}' : {pourcentage}% reçu ({recu}/{taille} octets)")
+                        seuil_suivant += 10
     except OSError:
         if os.path.exists(chemin_destination): os.remove(chemin_destination)
         raise
     return recu
 
-def envoyer_fichier(conn_socket, chemin_source):
+def envoyer_fichier(conn_socket, chemin_source, taille, nom_fichier=""):
+    envoye = 0
+    seuil_suivant = 10
     with open(chemin_source, "rb") as f:
         while True:
             morceau = f.read(BUFFER_SIZE)
             if not morceau: break
             conn_socket.sendall(morceau)
+            envoye += len(morceau)
+
+            if taille > 0:
+                pourcentage = int((envoye / taille) * 100)
+                if pourcentage >= seuil_suivant:
+                    logger.info(f"[DOWNLOAD] '{nom_fichier}' : {pourcentage}% envoyé ({envoye}/{taille} octets)")
+                    seuil_suivant += 10
 
 def nettoyer_fichiers_temporaires():
     motif = os.path.join(STORAGE_DIR, "**", ".tmp_*")
@@ -159,7 +176,7 @@ def gerer_client(conn_socket, adresse):
                 chemin_temp = os.path.join(dossier_dest, nom_temp)
                 envoyer_ligne(conn_socket, "OK|Prêt")
 
-                try: recu = recevoir_fichier(conn_socket, chemin_temp, taille)
+                try: recu = recevoir_fichier(conn_socket, chemin_temp, taille, nom_fichier_original)
                 except OSError:
                     envoyer_ligne(conn_socket, "ERROR|Erreur d'écriture")
                     continue
@@ -191,7 +208,7 @@ def gerer_client(conn_socket, adresse):
                 taille = os.path.getsize(chemin_source)
                 hash_fichier = infos.get("hash") or ""
                 envoyer_ligne(conn_socket, f"FILE|{nom_fichier}|{taille}|{hash_fichier}")
-                envoyer_fichier(conn_socket, chemin_source)
+                envoyer_fichier(conn_socket, chemin_source, taille, nom_fichier)
                 db_manager.enregistrer_transfert(infos["id"], client_id, "DOWNLOAD")
 
     except Exception as e:
@@ -243,6 +260,47 @@ def action_arreter():
     btn_demarrer.config(state="normal")
     btn_arreter.config(state="disabled")
 
+# ----------------------- Gestion des utilisateurs -----------------------
+def rafraichir_liste_utilisateurs():
+    if listbox_utilisateurs is None or not listbox_utilisateurs.winfo_exists():
+        return
+    listbox_utilisateurs.delete(0, tk.END)
+    try:
+        comptes = db_manager.lister_utilisateurs()
+    except Exception as e:
+        logger.error(f"Impossible de charger la liste des utilisateurs : {e}")
+        return
+    for compte in comptes:
+        listbox_utilisateurs.insert(
+            tk.END, f"{compte['nom_utilisateur']}    (créé le {compte['date_creation']})"
+        )
+
+def action_supprimer_utilisateur():
+    selection = listbox_utilisateurs.curselection()
+    if not selection:
+        messagebox.showwarning("Sélection requise", "Choisissez un utilisateur dans la liste.")
+        return
+
+    comptes = db_manager.lister_utilisateurs()
+    if selection[0] >= len(comptes):
+        return
+    nom_utilisateur = comptes[selection[0]]["nom_utilisateur"]
+
+    confirmation = messagebox.askyesno(
+        "Confirmer la suppression",
+        f"Supprimer définitivement le compte '{nom_utilisateur}' ?"
+    )
+    if not confirmation:
+        return
+
+    if db_manager.supprimer_utilisateur(nom_utilisateur):
+        logger.info(f"[ADMIN] Compte utilisateur '{nom_utilisateur}' supprimé via l'interface serveur.")
+        messagebox.showinfo("Succès", f"Utilisateur '{nom_utilisateur}' supprimé.")
+    else:
+        messagebox.showerror("Erreur", f"Impossible de supprimer '{nom_utilisateur}' (introuvable).")
+
+    rafraichir_liste_utilisateurs()
+
 #Interface
 class HandlerTkinter(logging.Handler):
     def __init__(self, text_widget):
@@ -257,7 +315,8 @@ class HandlerTkinter(logging.Handler):
         if self.text_widget.winfo_exists(): self.text_widget.after(0, _append)
 
 def initialiser_gui():
-    global lbl_statut, btn_demarrer, btn_arreter
+    global lbl_statut, btn_demarrer, btn_arreter, listbox_utilisateurs
+    db_manager.initialiser_bdd()  # s'assure que la table utilisateurs existe avant tout affichage
     root = tk.Tk()
     root.title("Serveur")
     root.geometry("750x600")
@@ -276,6 +335,36 @@ def initialiser_gui():
     btn_arreter = tk.Button(frame_buttons, text="■ Arrêter le Serveur", bg="#FF3B30", fg="#FFFFFF", font=("Helvetica", 10, "bold"), bd=0, padx=15, pady=8, state="disabled", command=action_arreter)
     btn_arreter.pack(side="left", padx=5)
 
+    # ----- Panneau de gestion des utilisateurs -----
+    frame_users = tk.Frame(root, bg="#2A2A32")
+    frame_users.pack(fill="x", padx=15, pady=(5, 10))
+
+    frame_users_header = tk.Frame(frame_users, bg="#2A2A32")
+    frame_users_header.pack(fill="x", padx=10, pady=(8, 5))
+    tk.Label(frame_users_header, text="Comptes utilisateurs", fg="#FFFFFF", bg="#2A2A32", font=("Helvetica", 10, "bold")).pack(side="left")
+
+    frame_users_body = tk.Frame(frame_users, bg="#2A2A32")
+    frame_users_body.pack(fill="x", padx=10, pady=(0, 10))
+
+    scrollbar_users = tk.Scrollbar(frame_users_body)
+    scrollbar_users.pack(side="right", fill="y")
+    listbox_utilisateurs = tk.Listbox(
+        frame_users_body, bg="#1E1E24", fg="#FFFFFF", bd=0, highlightthickness=0,
+        font=("Consolas", 10), height=6, selectbackground="#007AFF",
+        yscrollcommand=scrollbar_users.set
+    )
+    listbox_utilisateurs.pack(side="left", fill="x", expand=True)
+    scrollbar_users.config(command=listbox_utilisateurs.yview)
+
+    frame_users_actions = tk.Frame(frame_users, bg="#2A2A32")
+    frame_users_actions.pack(fill="x", padx=10, pady=(0, 10))
+    tk.Button(frame_users_actions, text="🔄 Actualiser", bg="#2A2A32", fg="#FFFFFF",
+              font=("Helvetica", 9, "bold"), bd=1, padx=10, pady=5,
+              command=rafraichir_liste_utilisateurs).pack(side="left", padx=(0, 8))
+    tk.Button(frame_users_actions, text="🗑 Supprimer le compte sélectionné", bg="#FF3B30", fg="#FFFFFF",
+              font=("Helvetica", 9, "bold"), bd=0, padx=10, pady=5,
+              command=action_supprimer_utilisateur).pack(side="left")
+
     frame_center = tk.Frame(root, bg="#1E1E24")
     frame_center.pack(fill="both", expand=True, padx=15, pady=10)
     txt_logs = ScrolledText(frame_center, bg="#2A2A32", fg="#30D158", font=("Consolas", 10), bd=0, highlightthickness=0)
@@ -284,6 +373,8 @@ def initialiser_gui():
     handler_gui = HandlerTkinter(txt_logs)
     handler_gui.setFormatter(_formatteur)
     logger.addHandler(handler_gui)
+
+    rafraichir_liste_utilisateurs()
     root.mainloop()
 
 if __name__ == "__main__":
