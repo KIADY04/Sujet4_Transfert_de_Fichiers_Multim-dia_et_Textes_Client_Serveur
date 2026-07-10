@@ -292,6 +292,16 @@ def supprimer_utilisateur(nom_utilisateur):
     return supprime
 
 
+def lister_utilisateurs():
+    """Retourne la liste de tous les comptes (id, nom, date de création), triés par id."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nom_utilisateur, date_creation FROM utilisateurs ORDER BY id")
+    resultats = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return resultats
+
+
 def nombre_utilisateurs():
     conn = get_connection()
     cur = conn.cursor()

@@ -69,3 +69,9 @@
 2026-07-10 08:34:17 [INFO] [DOWNLOAD] '$UICIDEBOY$_-_BLOODY_98__FEAT._GHOSTEMANE___Lyric_Video_(144p).mp4' : 90% envoyé (7151616/7944157 octets)
 2026-07-10 08:34:18 [INFO] [DOWNLOAD] '$UICIDEBOY$_-_BLOODY_98__FEAT._GHOSTEMANE___Lyric_Video_(144p).mp4' : 100% envoyé (7944157/7944157 octets)
 2026-07-10 08:35:09 [INFO] === Serveur arrêté ===
+2026-07-10 08:48:18 [INFO] === Serveur démarré sur 0.0.0.0:5000 ===
+2026-07-10 08:48:49 [INFO] [+] Nouveau client connecté : 192.168.88.17:58759
+2026-07-10 08:48:53 [INFO] [-] Client déconnecté : 192.168.88.17:58759
+2026-07-10 08:48:53 [INFO] [+] Nouveau client connecté : 192.168.88.17:58760
+2026-07-10 08:49:05 [INFO] [-] Client déconnecté : 192.168.88.17:58760
+2026-07-10 08:51:00 [INFO] === Serveur arrêté ===
