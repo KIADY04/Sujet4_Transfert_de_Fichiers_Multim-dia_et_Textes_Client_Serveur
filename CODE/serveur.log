@@ -19,3 +19,11 @@
 2026-07-09 13:07:40 [INFO] [-] Client déconnecté : 127.0.0.1:34886
 2026-07-09 13:07:56 [INFO] [+] Nouveau client connecté : 127.0.0.1:40722
 2026-07-09 13:08:05 [INFO] [-] Client déconnecté : 127.0.0.1:40722
+2026-07-09 20:40:27 [INFO] === Serveur démarré sur 0.0.0.0:5000 ===
+2026-07-09 20:41:13 [INFO] === Serveur démarré sur 0.0.0.0:5000 ===
+2026-07-09 20:42:23 [INFO] === Serveur démarré sur 0.0.0.0:5000 ===
+2026-07-09 20:42:48 [INFO] [+] Nouveau client connecté : 192.168.56.1:58582
+2026-07-09 20:42:55 [INFO] [-] Client déconnecté : 192.168.56.1:58582
+2026-07-09 20:42:55 [INFO] [+] Nouveau client connecté : 192.168.56.1:58585
+2026-07-09 20:44:16 [INFO] [-] Client déconnecté : 192.168.56.1:58585
+2026-07-09 20:44:19 [INFO] === Serveur arrêté ===
